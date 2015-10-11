@@ -1,4 +1,5 @@
 ﻿using LCLuminexController;
+using ManagedWinapi.Windows;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -12,10 +13,12 @@ namespace LuminexController
     {
         static void Main(string[] args)
         {
-            int handle = int.Parse(args[0]);
-            Bitmap bmp = CaptureHelper.CaptureControl((IntPtr)handle);
-            Console.WriteLine("snapshot saved at f:\\test.jpg");
-            bmp.Save("f:\\test.jpg");
+            //int handle = int.Parse(args[0]);
+            //Bitmap bmp = CaptureHelper.CaptureControl((IntPtr)handle);
+            //Console.WriteLine("snapshot saved at f:\\test.jpg");
+            //bmp.Save("f:\\test.jpg");
+            WindowOp winOp = new WindowOp();
+            winOp.OpenBatches();
 
         }
     }
