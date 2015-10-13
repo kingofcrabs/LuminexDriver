@@ -6,14 +6,14 @@
 using namespace cv;
 using namespace std;
 int GetFirstGrayLinePosition(Mat& src);
-
+string folder = "f:\\LuminexControl\\";
 int _tmain(int argc, _TCHAR* argv[])
 {
-	Mat img = imread("f:\\LuminexControl\\batches.jpg");
+	Mat img = imread(folder + "batches.jpg");
 	//threshold(img, gray, 200, 255, 0);
 	int position = GetFirstGrayLinePosition(img);
-	imwrite("f:\\LuminexControl\\processed.jpg",img);
-	ofstream ofs("f:\\LuminexControl\\result.txt");
+	imwrite(folder + "processed.jpg",img);
+	ofstream ofs(folder + "result.txt");
 	ofs << position << endl;
 	return 0;
 }

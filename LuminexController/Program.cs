@@ -13,13 +13,21 @@ namespace LuminexController
     {
         static void Main(string[] args)
         {
-            //int handle = int.Parse(args[0]);
-            //Bitmap bmp = CaptureHelper.CaptureControl((IntPtr)handle);
-            //Console.WriteLine("snapshot saved at f:\\test.jpg");
-            //bmp.Save("f:\\test.jpg");
+            int batchID = int.Parse(args[0]);
             WindowOp winOp = new WindowOp();
-            winOp.OpenBatches();
+            bool bok = winOp.SelectLastBatch(batchID);
+            if(!bok)
+            {
+                OnError();
+                return;
+            }
+        }
 
+        static void OnError()
+        {
+            Folders.WriteResult(false);
+            Console.WriteLine("Press any key to exit!");
+            Console.ReadKey();
         }
     }
 

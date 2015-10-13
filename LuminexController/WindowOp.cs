@@ -1,6 +1,10 @@
-﻿using ManagedWinapi.Windows;
+﻿using LCLuminexController;
+using ManagedWinapi.Windows;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,35 +33,10 @@ namespace LuminexController
             else
                 return selectionWindows[0];
         }
-        //public SystemWindow GetStartupWindow()
-        //{
-        //    return GetWindow("Startup");
-        //}
-        //public SystemWindow GetShuttingDownWindow()
-        //{
-        //    return GetWindow("Shutting Down");
-        //}
-        //public SystemWindow GetSelectionWindow()
-        //{
-        //    return GetWindow("Selection");
-        //}
-        //public SystemWindow GetRuntimeControllerWindow()
-        //{
-        //    return GetWindow("Runtime Controller");
-        //}
 
-        //private SystemWindow GetNewRunWindow()
-        //{
-        //    return GetWindow("New Run");
-        //}
         public SystemWindow GetLuminexTopWindow()
         {
             return GetWindow("Luminex100 IS Software");
-        }
-        private SystemWindow GetNotePadWindow()
-        {
-            SystemWindow[] selectionWindows = SystemWindow.AllToplevelWindows.Where(x => x.Title.Contains("test.txt")).ToArray();
-            return selectionWindows[0];
         }
 
         protected void Select(AutomationElement element)
@@ -91,7 +70,10 @@ namespace LuminexController
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool SetForegroundWindow(IntPtr hWnd);
-
+        internal void HideWindow(SystemWindow window)
+        {
+            ShowWindow(window.HWnd, SW_HIDE);
+        }
 
         private void MinimizeWindow(IntPtr handle)
         {
@@ -104,40 +86,99 @@ namespace LuminexController
         }
         
         
-        public void OpenBatches()
+        //1 find window
+        //2 maximize the window
+        //3 bring the window into foreground
+        //4 find the open batches window
+        //5 capture the image of listview in open batches window
+        //6 analysis the listview's image to judge its row's total count
+        //7 select the last one.
+        //8 click select button
+        public bool SelectLastBatch(int batchID)
         {
-            SystemWindow luminexTopWindow = GetLuminexTopWindow();
-            IntPtr hwnd = luminexTopWindow.HWnd;
-            winMessenger.MaximizeWindow(hwnd);
-            //SetForegroundWindow(luminexTopWindow.HWnd);
-            AutomationElement uiElement = AutomationElement.FromHandle(hwnd);
-            uiElement.SetFocus();
-        
-            Thread.Sleep(500); 
+            bool bok = true;
             try
             {
-                winMessenger.Open();
+                SystemWindow luminexTopWindow = GetLuminexTopWindow();
+                IntPtr hwnd = luminexTopWindow.HWnd;
+                winMessenger.MaximizeWindow(hwnd);
+                //SetForegroundWindow(luminexTopWindow.HWnd);
+                AutomationElement mainWindow = AutomationElement.FromHandle(hwnd);
+                mainWindow.SetFocus();
+                Thread.Sleep(500); 
+                winMessenger.Open(); //send ctrl + o key
                 Thread.Sleep(500);
-                winMessenger.ReleaseKey();
-                SelectLastBatch(uiElement);
-                //winMessenger.MouseMove
-                //AutomationElement openBatchSelectButton = GetOpenBatchesSelectButton(uiElement);
-                //Click(openBatchSelectButton);
+                winMessenger.ReleaseKey(); //release ctrl button
+
+                AutomationElement openBatchWindow = GetOpenBatchesWindow(mainWindow);
+                AutomationElement lstView = CaptureListView(openBatchWindow);
+                int nPosition = GetFirstGrayLinePosition();
+                IsValidBatchID(batchID, nPosition);
+                ClickLastBatch(lstView, nPosition);
+
+                var selectButton = GetOpenBatchesSelectButton(openBatchWindow);
+                Click(selectButton);//another alternative is use ClickButton.
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                bok = false;
             }
-          
-            //PostMessage(proc.MainWindowHandle, WM_KEYDOWN, VK_F5, 0);
-            //SendKeys.SendWait("^n");
+            return bok;
+
         }
 
-        private void SelectLastBatch(AutomationElement uiElement)
+        private void IsValidBatchID(int batchID, int nPosition)
         {
-            var lstView = uiElement.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, ""));
+            //if not valid, throw expection,listview中的行数，必须>=当前的batchID，行数可以通过第一条灰色线的位置计算出来。
+            double nLines = nPosition - 21.0; //first row starts from 21 pixel
+            int nRowCnt = (int)Math.Round(nLines / 19.0); //19 pixel per row
+            if (batchID > nRowCnt)
+                throw new Exception("无法找到当前Batch的定义！");
+        }
+
+        private int GetFirstGrayLinePosition()
+        {
+            string sExe = Folders.GetExeParentFolder() + "CountGrayLines.exe";
+            // Prepare the process to run
+            ProcessStartInfo start = new ProcessStartInfo();
+            // Enter in the command line arguments, everything you would enter after the executable name itself
+            start.Arguments = ""; 
+            // Enter the executable to run, including the complete path
+            start.FileName = sExe;
+            // Do you want to show a console window?
+            start.WindowStyle = ProcessWindowStyle.Hidden;
+            start.CreateNoWindow = true;
+            // Run the external process & wait for it to finish
+            using (Process proc = Process.Start(start))
+            {
+                 proc.WaitForExit();
+            }
+            string sResult = Folders.GetImageFolder() + "result.exe";
+            return int.Parse(File.ReadAllText(sResult));
+        }
+
+        private AutomationElement CaptureListView(AutomationElement openBatchWindow)
+        {
+            var lstView = openBatchWindow.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, ""));
+            Bitmap bmp = CaptureHelper.CaptureControl((IntPtr)lstView.Current.NativeWindowHandle);
+            string sImage = Folders.GetImageFolder() + "batches.jpg";
+            Console.WriteLine("snapshot saved at :" + sImage);
+            bmp.Save(sImage);
+            return lstView;
+        }
+
+        private AutomationElement GetOpenBatchesWindow(AutomationElement mainWindow)
+        {
+            return mainWindow.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, "Open Batches"));
+        }
+
+        private void ClickLastBatch(AutomationElement lstView, int nPosition)
+        {
             System.Windows.Rect rect = (System.Windows.Rect)lstView.GetCurrentPropertyValue(AutomationElement.BoundingRectangleProperty);
-            winMessenger.MouseMove((int)rect.Left + 100, (int)rect.Top + 110);
+            const int eachRowHeight = 19;
+            winMessenger.MouseMove((int)rect.Left + 100, (int)rect.Top + nPosition - eachRowHeight/2);
+            winMessenger.Click();
         }
         
 
@@ -147,74 +188,6 @@ namespace LuminexController
         }
 
      
-
-        //internal void WaitForRunWindow()
-        //{
-        //    log.Info("Wait for run window");
-        //    bool bFound = false;
-        //    for (int i = 0; i < 20; i++)
-        //    {
-        //        var runWindow = GetWindow("Runtime Controller");
-        //        if (runWindow != null)
-        //        {
-        //            log.Info("found the window");
-        //            bFound = true;
-        //            break;
-        //        }
-        //        Thread.Sleep(250);
-        //    }
-        //    Thread.Sleep(500);
-        //    if (!bFound)
-        //        throw new Exception("运行窗口不存在！");
-
-        //}
-
-        //public void ClickRunButton()
-        //{
-        //    log.Info("try to run script");
-        //    var runWindow = GetWindow("Runtime Controller");
-        //    if (runWindow == null)
-        //        throw new Exception("运行窗口不存在！");
-        //    Thread.Sleep(1000);
-        //    var newRunWindow = GetNewRunWindow();
-        //    if (newRunWindow != null)
-        //        ClickNewButton(newRunWindow);
-        //    log.Info("click run button");
-        //    ClickRunButton(runWindow);
-        //    log.Info("minimize");
-        //    MinimizeWindow(runWindow.HWnd);
-        //}
-
-
-        //private void ClickNewButton(SystemWindow runWindow)
-        //{
-        //    var newButton = GetNewRunWindow();
-        //    if (newButton == null)
-        //        throw new Exception("新建按钮无法找到！");
-        //    ClickButton(newButton);
-        //}
-
-        //private void ClickRunButton(SystemWindow runWindow)
-        //{
-        //    int retryTimes = 6;
-        //    for (; ; )
-        //    {
-        //        SystemWindow[] runButtons = runWindow.AllDescendantWindows.Where(x => x.Title == "Run" && x.Visible).ToArray();
-        //        if (runButtons.Count() == 0)
-        //        {
-        //            retryTimes--;
-        //            Thread.Sleep(400);
-        //            if (retryTimes == 0)
-        //                throw new Exception("运行按钮无法找到！");
-        //        }
-        //        else
-        //        {
-        //            ClickButton(runButtons.First());
-        //            break;
-        //        }
-        //    }
-        //}
-
         private void ClickButton(SystemWindow systemWindow)
         {
             POINT pt = winMessenger.GetWindowCenter(systemWindow);
@@ -223,21 +196,7 @@ namespace LuminexController
             winMessenger.Click();
         }
 
-        private AutomationElement FindButton(AutomationElement currentWindow, string buttonName)
-        {
-            var isButtonCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button);
-            var isEnableCondition = new PropertyCondition(AutomationElement.IsEnabledProperty, true);
-            var isOkCondition = new PropertyCondition(AutomationElement.NameProperty, buttonName);
-            var enabledButtonCondition = new AndCondition(new Condition[] { isButtonCondition, isEnableCondition, isOkCondition });
-            var okButton = currentWindow.FindFirst(TreeScope.Descendants, enabledButtonCondition);
-            if (okButton == null)
-                throw new Exception("无法找到下一步按钮！");
-            return okButton;
-        }
-
-        internal void HideWindow(SystemWindow window)
-        {
-            ShowWindow(window.HWnd, SW_HIDE);
-        }
+    
+       
     }
 }
