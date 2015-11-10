@@ -117,8 +117,13 @@ namespace LuminexController
             keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY, 0);
             //keybd_event(O, 0, KEYEVENTF_KEYDOWN, 0); 
             //keybd_event(O, 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(N, 0, KEYEVENTF_KEYDOWN, 0); 
-            keybd_event(N, 0, KEYEVENTF_KEYUP, 0);
+            //keybd_event(N, 0, KEYEVENTF_KEYDOWN, 0); 
+            //keybd_event(N, 0, KEYEVENTF_KEYUP, 0);
+
+            keybd_event(O, 0, KEYEVENTF_KEYDOWN, 0);
+            keybd_event(O, 0, KEYEVENTF_KEYUP, 0);
+
+
             keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
 
 

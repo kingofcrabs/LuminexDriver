@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Windows Desktop
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuminexController", "LuminexController\LuminexController.csproj", "{E5E4A9A1-1148-4BA8-AABF-E31E1FBE0C5A}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CountGrayLines", "CountGrayLines\CountGrayLines.vcxproj", "{8E58A64A-6648-47E3-AA4D-029788CEEA50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,16 +25,6 @@ Global
 		{E5E4A9A1-1148-4BA8-AABF-E31E1FBE0C5A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{E5E4A9A1-1148-4BA8-AABF-E31E1FBE0C5A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{E5E4A9A1-1148-4BA8-AABF-E31E1FBE0C5A}.Release|Win32.ActiveCfg = Release|Any CPU
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Debug|Win32.Build.0 = Debug|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Release|Any CPU.ActiveCfg = Release|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Release|Win32.ActiveCfg = Release|Win32
-		{8E58A64A-6648-47E3-AA4D-029788CEEA50}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
