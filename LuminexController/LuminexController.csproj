@@ -58,7 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="capturePicture.cs" />
-    <Compile Include="Folders.cs" />
+    <Compile Include="Folders2.cs" />
     <Compile Include="LuminexSDK.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
