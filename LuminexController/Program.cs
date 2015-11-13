@@ -13,7 +13,6 @@ namespace LuminexController
     {
         static void Main(string[] args)
         {
-<<<<<<< .mine
             string sArg = args[0];
             bool bok = true;
             if(sArg == "e")
@@ -36,16 +35,11 @@ namespace LuminexController
             }
 
             int batchID = int.Parse(sArg);
-=======
-            int batchID = int.Parse(args[0]);
->>>>>>> .r4
             WindowOp winOp = new WindowOp();
-<<<<<<< .mine
             try
             {
                 //winOp.SelectLastBatch(batchID);
                 winOp.ClickRun();
-                LuminexSDK.Instance.Close();
             }
             catch(Exception ex)
             {
@@ -54,27 +48,20 @@ namespace LuminexController
                 Console.WriteLine("Press any key to exit!");
                 Console.ReadKey();
             }
+            finally
+            {
+                LuminexSDK.Instance.Close();
+            }
             Folders.WriteResult(bok);
         }
-=======
-            bool bok = winOp.SelectLastBatch(batchID);
-            if(!bok)
-            {
-                OnError();
-                return;
-            }
-        }
->>>>>>> .r4
 
-<<<<<<< .mine
-=======
         static void OnError()
         {
             Folders.WriteResult(false);
             Console.WriteLine("Press any key to exit!");
             Console.ReadKey();
         }
->>>>>>> .r4
+
     }
 
 
