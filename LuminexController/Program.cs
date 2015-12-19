@@ -13,32 +13,28 @@ namespace LuminexController
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("version is : {0}", strings.version);
+            if(args.Count() == 0)
+            {
+                Console.WriteLine("Argument not defined, press any key to exit!");
+                Console.ReadKey();
+                return;
+            }
             string sArg = args[0];
+            WindowOp winOp = new WindowOp();
             bool bok = true;
             if(sArg == "e")
             {
-                Console.WriteLine("Ejecting Plate.");
-                try
-                {
-                    LuminexSDK.Instance.Eject();
-                    LuminexSDK.Instance.Close();
-                }
-                catch(Exception ex)
-                {
-                    bok = false;
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine("Press any key to exit!");
-                    Console.ReadKey();
-                }
-                Folders.WriteResult(bok);
+                winOp.Eject();
                 return;
             }
 
+
             int batchID = int.Parse(sArg);
-            WindowOp winOp = new WindowOp();
+            
             try
             {
-                //winOp.SelectLastBatch(batchID);
+                winOp.SelectLastBatch(batchID);
                 winOp.ClickRun();
             }
             catch(Exception ex)
@@ -48,19 +44,10 @@ namespace LuminexController
                 Console.WriteLine("Press any key to exit!");
                 Console.ReadKey();
             }
-            finally
-            {
-                LuminexSDK.Instance.Close();
-            }
+          
             Folders.WriteResult(bok);
         }
-
-        static void OnError()
-        {
-            Folders.WriteResult(false);
-            Console.WriteLine("Press any key to exit!");
-            Console.ReadKey();
-        }
+        
 
     }
 

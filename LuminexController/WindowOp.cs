@@ -21,6 +21,7 @@ namespace LuminexController
     public class WindowOp
     {
         protected static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         WindowMessenger winMessenger = new WindowMessenger();
         public List<string> EnumTopWindows()
         {
@@ -36,7 +37,7 @@ namespace LuminexController
                 return selectionWindows[0];
         }
 
-        internal void ClickRun()
+        void SelectRunBatchTab()
         {
             SystemWindow luminexTopWindow = GetLuminexTopWindow();
 
@@ -53,15 +54,37 @@ namespace LuminexController
             {
                 throw new Exception("Fail to get main Window!");
             }
-            LuminexSDK.Instance.Eject();
             mainWindow.SetFocus();
             winMessenger.MouseMove(147, 120);
             winMessenger.Click();
             Thread.Sleep(500);
+        }
+        internal void ClickRun()
+        {
+            SelectRunBatchTab();
+            ClickStart();
+        }
+
+
+        internal void Eject()
+        {
+            SelectRunBatchTab();
+            ClickEjectRetract();
+        }
+
+
+        private void ClickStart()
+        {
             winMessenger.MouseMove(667, 544); //start
             winMessenger.Click();
         }
 
+        void ClickEjectRetract()
+        {
+            winMessenger.MouseMove(670, 631); //eject/retract
+            winMessenger.Click();
+            Thread.Sleep(2000);
+        }
    
         public SystemWindow GetLuminexTopWindow()
         {
@@ -123,97 +146,68 @@ namespace LuminexController
         //6 analysis the listview's image to judge its row's total count
         //7 select the last one.
         //8 click select button
-        public bool SelectLastBatch(int batchID)
+        public void SelectLastBatch(int batchID)
         {
-            bool bok = true;
-            try
+            
+            SystemWindow luminexTopWindow = GetLuminexTopWindow();
+
+            if (luminexTopWindow == null)
             {
-                SystemWindow luminexTopWindow = GetLuminexTopWindow();
-
-                if (luminexTopWindow == null)
-                {
-                    Console.WriteLine("Fail to get luminex top window!");
-
-                    return false;
-                }
-                else
-                {
-                    Console.WriteLine("Get luminex top window!");
-
-                }
-
-                IntPtr hwnd = luminexTopWindow.HWnd;
-                winMessenger.MaximizeWindow(hwnd);
-                //SetForegroundWindow(luminexTopWindow.HWnd);
-                AutomationElement mainWindow = AutomationElement.FromHandle(hwnd);
-
-                if (mainWindow == null)
-                {
-                    Console.WriteLine("Fail to get main Window!");
-
-                    return false;
-                }
-                else
-                {
-                    Console.WriteLine("Get main Window!");
-
-                }
-
-                try
-                {
-                    mainWindow.SetFocus();
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    return false;
-
-                }
-                Thread.Sleep(500); 
-                winMessenger.Open(); //send ctrl + o key
-                Thread.Sleep(500);
-                winMessenger.ReleaseKey(); //release ctrl button
-
-                AutomationElement openBatchWindow = GetOpenBatchesWindow(mainWindow);
-                if (openBatchWindow == null)
-                {
-                    Console.WriteLine("Fail to get open Batch Window!");
-
-                    return false;
-                }
-                else
-                {
-                    Console.WriteLine("Get open Batch Window!");
-
-                }
-                Bitmap bmp = null;
-                AutomationElement lstView = CaptureListView(openBatchWindow, ref  bmp);
-
-                if (lstView == null)
-                {
-                    Console.WriteLine("Fail to get lstView!");
-
-                    return false;
-                }
-                int nPosition = GetFirstGrayLinePosition(bmp);
-
-                Console.WriteLine("nPosition is " + nPosition);
-
-                IsValidBatchID(batchID, nPosition);
-                ClickLastBatch(lstView, nPosition);
-
-                var selectButton = GetOpenBatchesSelectButton(openBatchWindow);
-
-                Click(selectButton);//another alternative is use ClickButton.
+                throw new Exception("Luminex IS App未启动!");
             }
-            catch(Exception ex)
+            else
             {
-                Console.WriteLine(ex.Message);
-                bok = false;
-            }
-            return bok;
+                Console.WriteLine("Get luminex top window!");
 
+            }
+
+            IntPtr hwnd = luminexTopWindow.HWnd;
+            winMessenger.MaximizeWindow(hwnd);
+            //SetForegroundWindow(luminexTopWindow.HWnd);
+            AutomationElement mainWindow = AutomationElement.FromHandle(hwnd);
+
+            if (mainWindow == null)
+            {
+                throw new Exception("未找到主窗口!");
+            }
+            else
+            {
+                Console.WriteLine("Get main Window!");
+            }
+
+               
+            mainWindow.SetFocus();
+                
+               
+            Thread.Sleep(500); 
+            winMessenger.Open(); //send ctrl + o key
+            Thread.Sleep(500);
+            winMessenger.ReleaseKey(); //release ctrl button
+
+            AutomationElement openBatchWindow = GetOpenBatchesWindow(mainWindow);
+            if (openBatchWindow == null)
+            {
+                throw new Exception("未能打开Open Batch窗口!");
+            }
+            else
+            {
+                Console.WriteLine("Get open Batch Window!");
+
+            }
+            Bitmap bmp = null;
+            AutomationElement lstView = CaptureListView(openBatchWindow, ref  bmp);
+
+            if (lstView == null)
+                throw new Exception("未能获得listView!");
+            int nPosition = GetFirstGrayLinePosition(bmp);
+            IsValidBatchID(batchID, nPosition);
+            ClickTheBatch(lstView,batchID);
+            //ClickLastBatch(lstView, nPosition);
+            var selectButton = GetOpenBatchesSelectButton(openBatchWindow);
+            Click(selectButton);//another alternative is use ClickButton.
         }
+
+        
 
         private int GetFirstGrayLinePosition(Bitmap bmp)
         {
@@ -237,6 +231,23 @@ namespace LuminexController
             int nRowCnt = (int)Math.Round(nLines / 19.0); //19 pixel per row
             if (batchID > nRowCnt)
                 throw new Exception("无法找到当前Batch的定义！");
+        }
+
+        private void ClickLastBatch(AutomationElement lstView, int nPosition)
+        {
+            System.Windows.Rect rect = (System.Windows.Rect)lstView.GetCurrentPropertyValue(AutomationElement.BoundingRectangleProperty);
+            const int eachRowHeight = 19;
+            winMessenger.MouseMove((int)rect.Left + 100, (int)rect.Top + nPosition - eachRowHeight / 2);
+            winMessenger.Click();
+        }
+
+        private void ClickTheBatch(AutomationElement lstView,int batchID)
+        {
+            const int eachRowHeight = 19;
+            int nPosition = 21 + eachRowHeight * batchID;
+            System.Windows.Rect rect = (System.Windows.Rect)lstView.GetCurrentPropertyValue(AutomationElement.BoundingRectangleProperty);
+            winMessenger.MouseMove((int)rect.Left + 100, (int)rect.Top + nPosition - eachRowHeight / 2);
+            winMessenger.Click();
         }
 
         private static List<int> GetTotalGrayLevelsAtDiffY(Bitmap bmp)
@@ -272,9 +283,6 @@ namespace LuminexController
         {
             var lstView = openBatchWindow.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, ""));
             bmp = CaptureHelper.CaptureControl((IntPtr)lstView.Current.NativeWindowHandle);
-            string sImage = Folders.GetImageFolder() + "batches.jpg";
-            Console.WriteLine("snapshot saved at :" + sImage);
-            bmp.Save(sImage);
             return lstView;
         }
 
@@ -285,13 +293,7 @@ namespace LuminexController
             return mainWindow.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.NameProperty, "Open Batch"));
         }
 
-        private void ClickLastBatch(AutomationElement lstView, int nPosition)
-        {
-            System.Windows.Rect rect = (System.Windows.Rect)lstView.GetCurrentPropertyValue(AutomationElement.BoundingRectangleProperty);
-            const int eachRowHeight = 19;
-            winMessenger.MouseMove((int)rect.Left + 100, (int)rect.Top + nPosition - eachRowHeight/2);
-            winMessenger.Click();
-        }
+      
         
 
         private AutomationElement GetOpenBatchesSelectButton(AutomationElement uiElement)

@@ -18,20 +18,9 @@ namespace LuminexController
         {
             string s = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             int index = 0;
-
-            for (int i = 0; i < 3; i++)
-            {
-
-                Console.WriteLine("Parent Folder is " + s);
-
-                index = s.LastIndexOf("\\");
-
-                s = s.Substring(0, index);
-            }
-
-            return s + "\\Debug\\";
-
-            //return s.Substring(0, index) + "\\";
+            index = s.LastIndexOf("\\");
+            s = s.Substring(0, index);
+            return s + "\\";
         }
 
         public static string GetOutputFolder()
@@ -52,13 +41,6 @@ namespace LuminexController
                 Directory.CreateDirectory(sDataFolder);
             return sDataFolder;
         }
-
-        public static string GetImageFolder()
-        {
-            return ConfigurationManager.AppSettings["imageSaveFolder"];
-        }
-
-        
 
         public static void WriteResult(bool result)
         {
